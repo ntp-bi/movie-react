@@ -1,16 +1,16 @@
-import React from 'react'
+import React from 'react';
 
-import { Route, Switch } from 'react-router-dom'
+import { Route, Switch } from 'react-router-dom';
 
 import Home from '../pages/Home';
 import Catalog from '../pages/Catalog';
-import Detail from '../pages/Detail'
+import Detail from '../pages/detail/Detail';
 
 const Routes = () => {
     return (
         <Switch>
             <Route
-                path='/:category/search/:keywork'
+                path='/:category/search/:keyword'
                 component={Catalog}
             />
             <Route
@@ -27,7 +27,7 @@ const Routes = () => {
                 component={Home}
             />
         </Switch>
-    )
+    );
 }
 
-export default Routes
+export default Routes;
