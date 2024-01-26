@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useHistory, useParams } from "react-router";
 
 import "./movie-grid.scss";
 
 import MovieCard from "../movie-card/MovieCard";
-import { useParams } from "react-router-dom/cjs/react-router-dom.min";
-import tmdbApi, { category, movieType } from "../../api/tmdbApi";
-import { OutLineButton } from "../button/Button";
+import Button, { OutLineButton } from "../button/Button";
+import Input from "../input/Input";
+
+import tmdbApi, { category, movieType, tvType } from "../../api/tmdbApi";
 
 const MovieGrid = (props) => {
     const [items, setItems] = useState([]);
@@ -22,7 +24,7 @@ const MovieGrid = (props) => {
 
             if (keyword === undefined) {
                 const params = {};
-
+                
                 switch (props.category) {
                     case category.movie:
                         response = await tmdbApi.getMoviesList(movieType.upcoming, {
@@ -30,15 +32,13 @@ const MovieGrid = (props) => {
                         });
                         break;
                     default:
-                        response = await tmdbApi.getMoviesList(movieType.popular, {
-                            params,
-                        });
+                        response = await tmdbApi.getTvList(tvType.popular, { params });
                 }
             } else {
-                const parmas = {
+                const params = {
                     query: keyword,
                 };
-                response = await tmdbApi.search(props.category, { parmas });
+                response = await tmdbApi.search(props.category, { params });
             }
             setItems(response.results);
             setTotalPage(response.total_pages);
@@ -61,16 +61,14 @@ const MovieGrid = (props) => {
                     });
                     break;
                 default:
-                    response = await tmdbApi.getMoviesList(movieType.popular, {
-                        params,
-                    });
+                    response = await tmdbApi.getTvList(tvType.popular, { params });
             }
         } else {
-            const parmas = {
+            const params = {
                 page: page + 1,
                 query: keyword,
             };
-            response = await tmdbApi.search(props.category, { parmas });
+            response = await tmdbApi.search(props.category, { params });
         }
         setItems([...items, ...response.results]);
         setPage(page + 1);
@@ -78,9 +76,13 @@ const MovieGrid = (props) => {
 
     return (
         <>
+            <div className="section mb-3">
+                <MovieSearch category={props.category} keyword={keyword} />
+            </div>
+            
             <div className="movie-grid">
                 {items.map((item, i) => (
-                    <MovieCard key={i} category={props.category} item={item} />
+                    <MovieCard category={props.category} item={item} key={i} />
                 ))}
             </div>
             {page < totalPage ? (
@@ -91,6 +93,45 @@ const MovieGrid = (props) => {
                 </div>
             ) : null}
         </>
+    );
+};
+
+const MovieSearch = (props) => {
+    const history = useHistory();
+
+    const [keyword, setKeyword] = useState(props.keyword ? props.keyword : "");
+
+    const goToSearch = useCallback(() => {
+        if (keyword.trim().length > 0) {
+            history.push(`/${category[props.category]}/search/${keyword}`);
+        }
+    }, [keyword, props.category, history]);
+
+    useEffect(() => {
+        const enterEvent = (e) => {
+            e.preventDefault();
+            if (e.keyCode === 13) {
+                goToSearch();
+            }
+        };
+        document.addEventListener("keyup", enterEvent);
+        return () => {
+            document.removeEventListener("keyup", enterEvent);
+        };
+    }, [keyword, goToSearch]);
+
+    return (
+        <div className="movie-search">
+            <Input
+                type="text"
+                placeholder="Enter keyword"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+            />
+            <Button className="small" onClick={goToSearch}>
+                Search
+            </Button>
+        </div>
     );
 };
 
